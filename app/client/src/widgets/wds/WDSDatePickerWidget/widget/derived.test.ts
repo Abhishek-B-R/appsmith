@@ -61,4 +61,96 @@ describe("isValid function", () => {
 
     expect(derived.isValid(props, mockMoment)).toBe(true);
   });
+
+  // The widget stores a picked day as local midnight, e.g. picking
+  // 2023-01-01 gives moment("2023-01-01T00:00:00").toISOString().
+  const pickedDay = (day: string) => moment(`${day}T00:00:00`).toISOString();
+
+  it("should return true when the picked day is the min date", () => {
+    const props = {
+      isDirty: true,
+      timePrecision: "day",
+      minDate: "2023-01-01",
+      selectedDate: pickedDay("2023-01-01"),
+    };
+
+    expect(derived.isValid(props, mockMoment)).toBe(true);
+  });
+
+  it("should return true when the picked day is the max date", () => {
+    const props = {
+      isDirty: true,
+      timePrecision: "day",
+      maxDate: "2023-12-31",
+      selectedDate: pickedDay("2023-12-31"),
+    };
+
+    expect(derived.isValid(props, mockMoment)).toBe(true);
+  });
+
+  it("should include both bounds when min and max date are set", () => {
+    const props = {
+      isDirty: true,
+      timePrecision: "day",
+      minDate: "2023-01-01",
+      maxDate: "2023-12-31",
+    };
+
+    expect(
+      derived.isValid(
+        { ...props, selectedDate: pickedDay("2023-01-01") },
+        mockMoment,
+      ),
+    ).toBe(true);
+    expect(
+      derived.isValid(
+        { ...props, selectedDate: pickedDay("2023-12-31") },
+        mockMoment,
+      ),
+    ).toBe(true);
+    expect(
+      derived.isValid(
+        { ...props, selectedDate: pickedDay("2024-01-01") },
+        mockMoment,
+      ),
+    ).toBe(false);
+  });
+
+  it("should compare by day when time precision is day", () => {
+    const props = {
+      isDirty: true,
+      timePrecision: "day",
+      minDate: moment("2023-01-01T15:30:00").toISOString(),
+      selectedDate: pickedDay("2023-01-01"),
+    };
+
+    expect(derived.isValid(props, mockMoment)).toBe(true);
+  });
+
+  it("should compare by minute when time precision is minute", () => {
+    const props = {
+      isDirty: true,
+      timePrecision: "minute",
+      minDate: moment("2023-01-01T15:30:00").toISOString(),
+    };
+
+    expect(
+      derived.isValid(
+        {
+          ...props,
+          selectedDate: moment("2023-01-01T15:29:00").toISOString(),
+        },
+        mockMoment,
+      ),
+    ).toBe(false);
+    expect(
+      derived.isValid(
+        {
+          ...props,
+          selectedDate: moment("2023-01-01T15:30:00").toISOString(),
+        },
+        mockMoment,
+      ),
+    ).toBe(true);
+  });
 });
